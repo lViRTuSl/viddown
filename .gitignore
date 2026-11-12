@@ -1,0 +1,13 @@
+# Derleme çıktıları
+build/
+.gradle/
+*.apk
+*.aab
+derlenmis/
+__pycache__/
+# İmza anahtarları ve yerel ayarlar (ASLA repoya girmemeli)
+*.jks
+*.keystore
+keystore.properties
+local.properties
+.idea/

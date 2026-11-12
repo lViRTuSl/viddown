@@ -1,0 +1,13 @@
+<resources>
+    <color name="bg">#FF121214</color>
+    <color name="ic_bg">#FFE53935</color>
+
+    <!-- Tek tema: koyu ve sabit. Tüm görünüm Compose ile çizilir. -->
+    <style name="Theme.ViDDoWN" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>
