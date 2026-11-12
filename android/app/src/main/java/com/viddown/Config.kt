@@ -23,6 +23,11 @@ data class Config(
     /** MP4'leri her cihazda (TV, medya oynatıcı) açılacak H.264 + AAC biçiminde kaydet. */
     val compatMp4: Boolean = true,
     val lastUpdateCheck: Long = 0L,
+    /** GitHub'dan uygulama güncellemesini otomatik denetle. */
+    val autoUpdateApp: Boolean = true,
+    /** GitHub'dan yt-dlp eklentilerini ve site ön ayarlarını al/uygula. */
+    val remoteExtensions: Boolean = true,
+    val lastAppCheck: Long = 0L,
 ) {
     fun sanitized(): Config = copy(
         mp3Quality = if (mp3Quality in MP3_QUALITIES) mp3Quality else "192k",
@@ -78,6 +83,9 @@ class ConfigManager(private val file: File) {
             put("auto_update_ytdlp", c.autoUpdateYtdlp)
             put("use_nightly", c.useNightly)
             put("compat_mp4", c.compatMp4)
+            put("auto_update_app", c.autoUpdateApp)
+            put("remote_extensions", c.remoteExtensions)
+            put("last_app_check", c.lastAppCheck)
             put("last_update_check", c.lastUpdateCheck)
         }.toString(2)
 
@@ -94,6 +102,9 @@ class ConfigManager(private val file: File) {
                 autoUpdateYtdlp = o.optBoolean("auto_update_ytdlp", d.autoUpdateYtdlp),
                 useNightly = o.optBoolean("use_nightly", d.useNightly),
                 compatMp4 = o.optBoolean("compat_mp4", d.compatMp4),
+                autoUpdateApp = o.optBoolean("auto_update_app", d.autoUpdateApp),
+                remoteExtensions = o.optBoolean("remote_extensions", d.remoteExtensions),
+                lastAppCheck = o.optLong("last_app_check", d.lastAppCheck),
                 lastUpdateCheck = o.optLong("last_update_check", d.lastUpdateCheck),
             ).sanitized()
         }

@@ -59,3 +59,30 @@ class BasicTests {
         assertEquals(1, summarize(r).ready)
     }
 }
+
+class RemoteTests {
+    private val sha = "a".repeat(64)
+    @Test fun parseManifest() {
+        val j = """{"app":{"versionCode":5,"versionName":"1.4.0","apkUrl":"https://x/y.apk","sha256":"$sha","notes":"n"},
+          "plugins":[{"name":"demo.py","url":"https://x/demo.py","sha256":"$sha"},{"name":"../evil.py","url":"https://x/e.py","sha256":"$sha"},{"name":"bad.py","url":"http://x/b.py","sha256":"$sha"}],
+          "presets":[{"hostRegex":"instagram\\.com","options":[["--user-agent","UA"],["--exec","rm -rf /"],["--extractor-args","instagram:foo=bar"]]},{"hostRegex":"(","options":[["--referer","x"]]}],
+          "message":"merhaba"}"""
+        val m = RemoteParser.parse(j)
+        assertEquals(5, m.app!!.versionCode); assertEquals("1.4.0", m.app!!.versionName)
+        assertEquals(listOf("demo.py"), m.plugins.map { it.name })
+        assertEquals(1, m.presets.size)
+        assertEquals(listOf("--user-agent", "--extractor-args"), m.presets[0].options.map { it.name })
+        assertEquals("merhaba", m.message)
+    }
+    @Test fun badAppIgnored() {
+        assertNull(RemoteParser.parse("""{"app":{"versionCode":9,"apkUrl":"http://insecure","sha256":"zz"}}""").app)
+        assertNull(RemoteParser.parse("{}").app)
+    }
+    @Test fun newer() { assertTrue(RemoteParser.isNewer(5, 4)); assertFalse(RemoteParser.isNewer(4, 4)) }
+    @Test fun presetByHost() {
+        val m = RemoteManifest(presets = listOf(Preset("instagram\\.com", listOf(YtOption("--referer", "r")))))
+        assertEquals(1, RemoteParser.optionsFor(m, "https://www.instagram.com/reel/x/").size)
+        assertTrue(RemoteParser.optionsFor(m, "https://x.com/a").isEmpty())
+        assertTrue(RemoteParser.optionsFor(m, "bozuk").isEmpty())
+    }
+}

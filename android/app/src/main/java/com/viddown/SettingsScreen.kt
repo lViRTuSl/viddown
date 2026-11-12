@@ -74,6 +74,9 @@ fun SettingsScreen(
     }
 
     val hasCookies by engine.hasCookies.collectAsStateWithLifecycle()
+    val upState by engine.updater.state.collectAsStateWithLifecycle()
+    val pluginCount by engine.updater.pluginCount.collectAsStateWithLifecycle()
+    val remoteMsg by engine.updater.message.collectAsStateWithLifecycle()
     val cookiePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) engine.importCookies(uri)
     }
@@ -214,6 +217,42 @@ fun SettingsScreen(
                 Button(onClick = { cookiePicker.launch(arrayOf("*/*")) }) { Text("cookies.txt Seç") }
                 OutlinedButton(onClick = { engine.removeCookies() }, enabled = hasCookies) { Text("Kaldır") }
             }
+            HorizontalDivider()
+
+            // --- Uygulama güncellemesi ve eklentiler
+            Section("Güncelleme ve eklentiler (GitHub)")
+            Text("Sürüm: ${BuildConfig.VERSION_NAME}", fontSize = 14.sp)
+            Text(
+                when (val s = upState) {
+                    is Updater.State.Checking -> "Denetleniyor…"
+                    is Updater.State.UpToDate -> "Güncel."
+                    is Updater.State.Available -> "Yeni sürüm hazır: ${s.release.versionName}"
+                    is Updater.State.Downloading -> "İndiriliyor… %${s.percent}"
+                    is Updater.State.Installing -> "Kuruluyor…"
+                    is Updater.State.Failed -> s.message
+                    else -> "Son denetim sonucu yok."
+                },
+                fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { engine.updater.check(manual = true) }) { Text("Güncellemeyi Denetle") }
+                if (upState is Updater.State.Available)
+                    Button(onClick = { engine.updater.downloadAndInstall() }) { Text("Güncelle") }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Switch(checked = cfg.autoUpdateApp, onCheckedChange = { v -> engine.config.update { it.copy(autoUpdateApp = v) } })
+                Text("  Açılışta otomatik denetle (6 saatte bir)", fontSize = 14.sp)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Switch(checked = cfg.remoteExtensions, onCheckedChange = { v -> engine.config.update { it.copy(remoteExtensions = v) } })
+                Text("  GitHub'dan eklenti ve site ön ayarlarını uygula", fontSize = 14.sp)
+            }
+            Text(
+                "Yüklü eklenti: $pluginCount. Eklentiler yeni site desteği veya düzeltmeler getirir; yalnızca resmi depodan, " +
+                    "SHA-256 doğrulamasıyla alınır.",
+                fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (remoteMsg.isNotBlank()) Text(remoteMsg, fontSize = 13.sp)
             HorizontalDivider()
 
             // --- FFmpeg

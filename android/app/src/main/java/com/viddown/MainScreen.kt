@@ -107,6 +107,7 @@ fun AppRoot(engine: DownloadEngine, incoming: MutableStateFlow<String?>) {
     val pending by engine.pendingMeta.collectAsStateWithLifecycle()
     val updating by engine.updating.collectAsStateWithLifecycle()
     val ytVersion by engine.ytdlpVersion.collectAsStateWithLifecycle()
+    val upState by engine.updater.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
 
     var screen by rememberSaveable { mutableIntStateOf(0) }          // 0 = ana, 1 = ayarlar
@@ -224,6 +225,8 @@ fun AppRoot(engine: DownloadEngine, incoming: MutableStateFlow<String?>) {
     ) { inner ->
         Column(Modifier.padding(inner).fillMaxSize()) {
             PhaseBanner(phase, pending, updating, onRetry = { engine.retryInit() })
+            UpdateBanner(upState, busy = summary.active + summary.waiting > 0,
+                onUpdate = { engine.updater.downloadAndInstall() })
 
             InputCard(
                 text = text,
@@ -294,6 +297,37 @@ fun AppRoot(engine: DownloadEngine, incoming: MutableStateFlow<String?>) {
             }
         }
     }
+}
+
+/** Yeni sürüm bildirimi: güncelleme indirilip sistem yükleyicisiyle kurulur. */
+@Composable
+private fun UpdateBanner(state: Updater.State, busy: Boolean, onUpdate: () -> Unit) {
+    var confirm by remember { mutableStateOf(false) }
+    when (state) {
+        is Updater.State.Available -> Surface(color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Yeni sürüm: ${state.release.versionName}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    if (state.release.notes.isNotBlank())
+                        Text(state.release.notes, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+                Button(onClick = { if (busy) confirm = true else onUpdate() }) { Text("Güncelle") }
+            }
+        }
+        is Updater.State.Downloading -> Column(Modifier.fillMaxWidth()) {
+            LinearProgressIndicator(progress = { state.percent / 100f }, modifier = Modifier.fillMaxWidth().height(3.dp))
+            Text("Güncelleme indiriliyor… %${state.percent}", Modifier.padding(horizontal = 16.dp, vertical = 4.dp), fontSize = 12.sp)
+        }
+        is Updater.State.Installing -> Text("Güncelleme kuruluyor…", Modifier.padding(horizontal = 16.dp, vertical = 6.dp), fontSize = 12.sp)
+        else -> Unit
+    }
+    if (confirm) AlertDialog(
+        onDismissRequest = { confirm = false },
+        title = { Text("Güncelleme") },
+        text = { Text("Devam eden indirmeler var. Güncelleme sırasında uygulama kapanır; indirmeler durdurulur ve sonra \"Devam Et\" ile sürdürülebilir.") },
+        confirmButton = { TextButton(onClick = { confirm = false; onUpdate() }) { Text("Güncelle") } },
+        dismissButton = { TextButton(onClick = { confirm = false }) { Text("Vazgeç") } },
+    )
 }
 
 @Composable

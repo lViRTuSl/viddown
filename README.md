@@ -10,10 +10,12 @@ YouTube, X (Twitter), Instagram, TikTok, Facebook, Reddit, Vimeo ve yt-dlp'nin d
 - Kuyruk, eşzamanlı indirme sınırı (1-10), hız sınırı (KB/s - MB/s), durdur / devam / kaldır
 - Giriş gerektiren siteler için isteğe bağlı `cookies.txt` desteği
 - yt-dlp güncelleme (Android'de otomatik)
+- **Android kendini günceller:** yeni sürüm GitHub'da yayınlanınca uygulama bildirir, APK'yı indirir (SHA-256 doğrulaması) ve kurar
+- **Uzaktan eklentiler:** GitHub'daki `update.json` ile yt-dlp eklentileri (yeni site desteği) ve siteye özel ön ayarlar uygulamaya otomatik gelir
 
 ## Android
 `android/` klasörü: Kotlin + Jetpack Compose. yt-dlp, FFmpeg ve Python uygulamanın içinde gelir.
-APK: [`releases/ViDDoWN-v1.2.0.apk`](releases/ViDDoWN-v1.2.0.apk) (arm64, Android 10+).
+APK: [`releases/ViDDoWN-v1.3.0.apk`](releases/ViDDoWN-v1.3.0.apk) (arm64, Android 10+).
 
 Derleme (JDK 17+, Android SDK):
 ```
@@ -30,3 +32,18 @@ Tek dosyalık .exe için Windows'ta `derle.bat`, diğer sistemlerde `python derl
 ## Notlar
 - YouTube ve diğer siteler sık değişir; indirme başarısız olursa yt-dlp'yi güncelleyin.
 - Yalnızca indirme hakkına sahip olduğunuz veya izin verilen içerikler için kullanın; sitelerin kullanım koşullarına uyun.
+
+## Yayın ve uzaktan güncelleme (Android)
+Uygulama, `update.json` dosyasını (bu deponun ana dalı) açılışta en fazla 6 saatte bir okur.
+
+Yeni sürüm yayınlamak:
+```
+cd android && ./gradlew assembleRelease          # aynı imza anahtarıyla!
+cd .. && python tools/yayinla.py android/app/build/outputs/apk/release/app-release.apk --code 5 --name 1.4.0 --notes "Yenilikler"
+git add -A && git commit -m "v1.4.0" && git push
+```
+`--code` her sürümde artmalı, APK aynı anahtarla imzalanmalıdır (Android farklı imzalı güncellemeyi reddeder). Eski APK'lar `releases/` klasöründen otomatik silinir.
+
+Eklenti eklemek (yt-dlp `.py` eklentisi, yalnızca sizin yazdığınız/denetlediğiniz kod): `python tools/yayinla.py --plugin benim_site.py` → `plugins/` klasörüne kopyalar, SHA-256 ile `update.json`'a yazar; commit + push sonrası telefonlar alır.
+Site ön ayarı: `update.json` içindeki `presets` alanına örn. `{"hostRegex": "instagram\\.com", "options": [["--user-agent", "..."]]}` ekleyin. Yalnızca güvenli seçenekler kabul edilir (`--extractor-args`, `--user-agent`, `--add-header`, `--referer`, `--sleep-*`, `--retries`).
+Ayarlar'dan güncelleme ve eklentiler ayrı ayrı kapatılabilir.

@@ -88,8 +88,11 @@ class DownloadEngine(private val app: Application) {
 
     // ------------------------------------------------------------------ yaşam döngüsü
 
+    val updater = Updater(app, config, scope) { say(it) }
+
     fun start() {
         config.load()
+        updater.start()
         restoreQueue()
         scope.launch { persistLoop() }
         scope.launch { watchConfig() }
@@ -221,7 +224,7 @@ class DownloadEngine(private val app: Application) {
         val compat = config.state.value.compatMp4
         fun run(opts: List<YtOption>): String {
             val r = YoutubeDLRequest(url)
-            (opts + cookieOptions()).forEach { r.add(it) }
+            (opts + cookieOptions() + updater.extraOptions(url)).forEach { r.add(it) }
             return yt.execute(r, null, false, null).out
         }
         if (isPlaylist) return MetadataParser.parse(run(YtArgs.probePlaylistOptions()), url)
@@ -342,7 +345,7 @@ class DownloadEngine(private val app: Application) {
         val tmp = File(tempRoot, id.toString()).also { it.mkdirs() }
 
         val req = YoutubeDLRequest(item.url)
-        (YtArgs.downloadOptions(item, tmp.absolutePath, cfg.speedLimitKbps, cfg.compatMp4) + cookieOptions()).forEach { req.add(it) }
+        (YtArgs.downloadOptions(item, tmp.absolutePath, cfg.speedLimitKbps, cfg.compatMp4) + cookieOptions() + updater.extraOptions(item.url)).forEach { req.add(it) }
         val tracker = ProgressTracker(item.size, item.streams)
         var lastEmit = 0L
         val yt = YoutubeDL.getInstance()
