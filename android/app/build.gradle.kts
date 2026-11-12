@@ -17,8 +17,8 @@ android {
         applicationId = "com.viddown.app"
         minSdk = 29
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.3.0"
+        versionCode = 5
+        versionName = "1.3.1"
 
         // Pixel 9 Pro XL (arm64). Diğer mimariler APK boyutunu gereksiz büyütür.
         ndk { abiFilters += listOf("arm64-v8a") }

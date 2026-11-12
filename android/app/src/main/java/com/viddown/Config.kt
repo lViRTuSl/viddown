@@ -28,6 +28,8 @@ data class Config(
     /** GitHub'dan yt-dlp eklentilerini ve site ön ayarlarını al/uygula. */
     val remoteExtensions: Boolean = true,
     val lastAppCheck: Long = 0L,
+    /** Yeni sürüm bulununca (indirme yokken) kendiliğinden indirip kur. */
+    val autoInstallApp: Boolean = true,
 ) {
     fun sanitized(): Config = copy(
         mp3Quality = if (mp3Quality in MP3_QUALITIES) mp3Quality else "192k",
@@ -86,6 +88,7 @@ class ConfigManager(private val file: File) {
             put("auto_update_app", c.autoUpdateApp)
             put("remote_extensions", c.remoteExtensions)
             put("last_app_check", c.lastAppCheck)
+            put("auto_install_app", c.autoInstallApp)
             put("last_update_check", c.lastUpdateCheck)
         }.toString(2)
 
@@ -105,6 +108,7 @@ class ConfigManager(private val file: File) {
                 autoUpdateApp = o.optBoolean("auto_update_app", d.autoUpdateApp),
                 remoteExtensions = o.optBoolean("remote_extensions", d.remoteExtensions),
                 lastAppCheck = o.optLong("last_app_check", d.lastAppCheck),
+                autoInstallApp = o.optBoolean("auto_install_app", d.autoInstallApp),
                 lastUpdateCheck = o.optLong("last_update_check", d.lastUpdateCheck),
             ).sanitized()
         }

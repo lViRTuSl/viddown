@@ -244,6 +244,10 @@ fun SettingsScreen(
                 Text("  Açılışta otomatik denetle (6 saatte bir)", fontSize = 14.sp)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
+                Switch(checked = cfg.autoInstallApp, onCheckedChange = { v -> engine.config.update { it.copy(autoInstallApp = v) } })
+                Text("  Yeni sürümü kendiliğinden indirip kur", fontSize = 14.sp)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Switch(checked = cfg.remoteExtensions, onCheckedChange = { v -> engine.config.update { it.copy(remoteExtensions = v) } })
                 Text("  GitHub'dan eklenti ve site ön ayarlarını uygula", fontSize = 14.sp)
             }

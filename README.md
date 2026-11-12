@@ -36,7 +36,7 @@ Tek dosyalık .exe için Windows'ta `derle.bat`, diğer sistemlerde `python derl
 ## Yayın ve uzaktan güncelleme (Android)
 Uygulama, `update.json` dosyasını (bu deponun ana dalı) açılışta en fazla 6 saatte bir okur.
 
-Yeni sürüm yayınlamak:
+Yeni sürüm yayınlamak (tek komut: `tools/surum_yayinla.sh 1.4.0 "Yenilikler"`; aşağıdaki adımlar aynı işi elle yapar):
 ```
 cd android && ./gradlew assembleRelease          # aynı imza anahtarıyla!
 cd .. && python tools/yayinla.py android/app/build/outputs/apk/release/app-release.apk --code 5 --name 1.4.0 --notes "Yenilikler"

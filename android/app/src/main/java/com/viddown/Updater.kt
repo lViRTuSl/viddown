@@ -31,6 +31,7 @@ class Updater(
     private val app: Application,
     private val config: ConfigManager,
     private val scope: CoroutineScope,
+    private val busy: () -> Boolean,
     private val say: (String) -> Unit,
 ) {
     sealed interface State {
@@ -94,6 +95,10 @@ class Updater(
             if (rel != null && RemoteParser.isNewer(rel.versionCode, localCode)) {
                 _state.value = State.Available(rel)
                 if (manual) say("Yeni sürüm var: ${rel.versionName}")
+                // Otomatik kurulum: yalnızca izin verilmişse ve indirme çalışmıyorsa
+                else if (config.state.value.autoInstallApp && !busy() && app.packageManager.canRequestPackageInstalls()) {
+                    downloadAndInstall()
+                }
             } else {
                 _state.value = State.UpToDate
                 if (manual) say("ViDDoWN güncel (${BuildConfig.VERSION_NAME}).")
@@ -300,11 +305,32 @@ class InstallReceiver : BroadcastReceiver() {
             @Suppress("DEPRECATION")
             val confirm = if (Build.VERSION.SDK_INT >= 33) intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
             else intent.getParcelableExtra(Intent.EXTRA_INTENT)
-            confirm?.let { runCatching { context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+            confirm?.let {
+                it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                // Arka planda etkinlik açılamayabilir: dokunulabilir bildirim de bırak.
+                runCatching { notifyConfirm(context, it) }
+                runCatching { context.startActivity(it) }
+            }
             return
         }
         val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
         (context.applicationContext as? App)?.engine?.updater?.onInstallResult(status, msg)
+    }
+
+    private fun notifyConfirm(context: Context, confirm: Intent) {
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        nm.createNotificationChannel(
+            android.app.NotificationChannel("guncelleme", "Uygulama güncellemesi", android.app.NotificationManager.IMPORTANCE_HIGH)
+        )
+        val pi = PendingIntent.getActivity(context, 7, confirm, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val n = androidx.core.app.NotificationCompat.Builder(context, "guncelleme")
+            .setSmallIcon(R.drawable.ic_stat_download)
+            .setContentTitle("ViDDoWN güncellemesi hazır")
+            .setContentText("Kurmak için dokunun")
+            .setAutoCancel(true)
+            .setContentIntent(pi)
+            .build()
+        nm.notify(1003, n)
     }
 
     companion object { const val ACTION = "com.viddown.INSTALL_RESULT" }

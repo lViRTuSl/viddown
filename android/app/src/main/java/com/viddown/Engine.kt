@@ -88,7 +88,7 @@ class DownloadEngine(private val app: Application) {
 
     // ------------------------------------------------------------------ yaşam döngüsü
 
-    val updater = Updater(app, config, scope) { say(it) }
+    val updater = Updater(app, config, scope, busy = { _items.value.any { it.status.isActive || it.status == Status.WAITING } }) { say(it) }
 
     fun start() {
         config.load()
