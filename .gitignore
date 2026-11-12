@@ -5,10 +5,8 @@ build/
 *.aab
 derlenmis/
 __pycache__/
-# İmza anahtarları ve yerel ayarlar (ASLA repoya girmemeli)
-*.jks
-*.keystore
-keystore.properties
+# Yerel ayarlar. İmza anahtarı bilerek depoda: android/keystore/ (güncellemeler için sabit imza)
 local.properties
+android/keystore.properties
 .idea/
 !releases/*.apk

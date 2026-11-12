@@ -24,18 +24,22 @@ android {
         ndk { abiFilters += listOf("arm64-v8a") }
     }
 
-    // İmza bilgileri repoda tutulmaz: android/keystore.properties (bkz. keystore.properties.example).
-    // Dosya yoksa release derlemesi imzasız çıkar.
-    val ksProps = Properties().apply {
-        val f = rootProject.file("keystore.properties")
-        if (f.exists()) f.inputStream().use { load(it) }
+    // İmza: android/keystore.properties (varsa, kişisel) veya depodaki android/keystore/signing.properties.
+    // Anahtar depoda tutulduğu için her ortamdan aynı imzayla derlenir; böylece güncellemeler
+    // mevcut kurulumun üstüne ayarlar korunarak kurulur.
+    val ksFile = listOf(rootProject.file("keystore.properties"), rootProject.file("keystore/signing.properties"))
+        .firstOrNull { it.exists() }
+    val ksProps = Properties().apply { if (ksFile != null) ksFile.inputStream().use { load(it) } }
+    val hasKeystore = ksFile != null && ksProps.getProperty("storeFile") != null
+    fun ksStore(): File {
+        val f = File(ksProps.getProperty("storeFile"))
+        return if (f.isAbsolute) f else File(ksFile!!.parentFile, f.path)
     }
-    val hasKeystore = ksProps.getProperty("storeFile") != null
 
     signingConfigs {
         if (hasKeystore) {
             create("release") {
-                storeFile = rootProject.file(ksProps.getProperty("storeFile"))
+                storeFile = ksStore()
                 storePassword = ksProps.getProperty("storePassword")
                 keyAlias = ksProps.getProperty("keyAlias")
                 keyPassword = ksProps.getProperty("keyPassword")

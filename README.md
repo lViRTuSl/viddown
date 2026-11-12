@@ -23,7 +23,7 @@ cd android
 echo "sdk.dir=/yol/android-sdk" > local.properties
 ./gradlew assembleRelease
 ```
-İmzalı çıktı için `keystore.properties.example` dosyasını `keystore.properties` olarak kopyalayıp doldurun; dosya yoksa APK imzasız çıkar. Anahtar dosyasını repoya eklemeyin ve yedekleyin: güncellemeler aynı anahtarla imzalanmalıdır.
+İmza anahtarı bilerek depodadır (`android/keystore/`): her ortamdan aynı imzayla derlenir ve güncellemeler mevcut kurulumun üstüne, ayarlar ve indirme listesi korunarak kurulur. Kendi anahtarınızı kullanmak isterseniz `keystore.properties.example` dosyasını `android/keystore.properties` olarak doldurun (bu dosya önceliklidir; ancak anahtar değişirse eski kurulum üstüne güncellenmez).
 
 ## Masaüstü
 `desktop/viddown.py` tek dosyadır: `python viddown.py` (PyQt6 ve yt-dlp eksikse otomatik kurulur; FFmpeg için ilk açılışta indirme önerilir).
@@ -38,11 +38,11 @@ Uygulama, `update.json` dosyasını (bu deponun ana dalı) açılışta en fazla
 
 Yeni sürüm yayınlamak (tek komut: `tools/surum_yayinla.sh 1.4.0 "Yenilikler"`; aşağıdaki adımlar aynı işi elle yapar):
 ```
-cd android && ./gradlew assembleRelease          # aynı imza anahtarıyla!
+cd android && ./gradlew assembleRelease
 cd .. && python tools/yayinla.py android/app/build/outputs/apk/release/app-release.apk --code 5 --name 1.4.0 --notes "Yenilikler"
 git add -A && git commit -m "v1.4.0" && git push
 ```
-`--code` her sürümde artmalı, APK aynı anahtarla imzalanmalıdır (Android farklı imzalı güncellemeyi reddeder). Eski APK'lar `releases/` klasöründen otomatik silinir.
+`--code` her sürümde artmalı, APK aynı anahtarla imzalanmalıdır (depodaki anahtar otomatik kullanılır). Eski APK'lar `releases/` klasöründen otomatik silinir.
 
 Eklenti eklemek (yt-dlp `.py` eklentisi, yalnızca sizin yazdığınız/denetlediğiniz kod): `python tools/yayinla.py --plugin benim_site.py` → `plugins/` klasörüne kopyalar, SHA-256 ile `update.json`'a yazar; commit + push sonrası telefonlar alır.
 Site ön ayarı: `update.json` içindeki `presets` alanına örn. `{"hostRegex": "instagram\\.com", "options": [["--user-agent", "..."]]}` ekleyin. Yalnızca güvenli seçenekler kabul edilir (`--extractor-args`, `--user-agent`, `--add-header`, `--referer`, `--sleep-*`, `--retries`).
