@@ -13,7 +13,7 @@ YouTube, X (Twitter), Instagram, TikTok, Facebook, Reddit, Vimeo ve yt-dlp'nin d
 
 ## Android
 `android/` klasörü: Kotlin + Jetpack Compose. yt-dlp, FFmpeg ve Python uygulamanın içinde gelir.
-APK'yı [Releases](../../releases) sayfasından indirin (arm64, Android 10+).
+APK: [`releases/ViDDoWN-v1.2.0.apk`](releases/ViDDoWN-v1.2.0.apk) (arm64, Android 10+).
 
 Derleme (JDK 17+, Android SDK):
 ```
